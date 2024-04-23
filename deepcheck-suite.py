@@ -82,5 +82,5 @@ if __name__ == "__main__":
     result = suite.run(train_dataset=training_data, test_dataset=test_data)
     result.save_as_html("output.html")
 
-    if result.passed():
+    if not result.passed():
         sys.exit(1)
