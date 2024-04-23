@@ -61,9 +61,7 @@ def test_loop(dataloader, model, loss_fn):
 
     test_loss /= num_batches
     correct /= size
-    print(
-        f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n"
-    )
+    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
 
 
 if __name__ == "__main__":
@@ -71,9 +69,7 @@ if __name__ == "__main__":
         root="data", train=True, download=True, transform=ToTensor()
     )
 
-    test_data = datasets.FashionMNIST(
-        root="data", train=False, download=True, transform=ToTensor()
-    )
+    test_data = datasets.FashionMNIST(root="data", train=False, download=True, transform=ToTensor())
 
     train_dataloader = DataLoader(training_data, batch_size=64)
     test_dataloader = DataLoader(test_data, batch_size=64)
@@ -82,7 +78,7 @@ if __name__ == "__main__":
     learning_rate = 1e-3
     batch_size = 64
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     epochs = 10
     for t in range(epochs):
@@ -92,4 +88,4 @@ if __name__ == "__main__":
     print("Done!")
 
     # Save the model at models
-    torch.save(model, "models/model.pt")
+    torch.save(model, "model.pt")
