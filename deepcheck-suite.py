@@ -3,7 +3,8 @@ import sys
 import numpy as np
 import torch
 from deepchecks.vision import Suite, VisionData
-from deepchecks.vision.checks.model_evaluation import ClassPerformance
+from deepchecks.vision.checks.model_evaluation import *
+from deepchecks.vision.utils.image_properties import brightness, texture_level
 from deepchecks.vision.vision_data import BatchOutputFormat
 from torch import nn
 from torch.utils.data import DataLoader
@@ -35,6 +36,29 @@ def deepchecks_collate_fn(batch) -> BatchOutputFormat:
     logits = model.to(device)(torch.stack(batch[0]).to(device))
     predictions = nn.Softmax(dim=1)(logits)
     return BatchOutputFormat(images=images, labels=labels, predictions=predictions)
+
+
+def get_class_performance_check(threshold):
+    check = ClassPerformance()
+    check.add_condition_test_performance_greater_than(threshold)
+    return check
+
+
+def get_simple_model_comparison_check(strategy, threshold):
+    check = SimpleModelComparison(strategy=strategy)
+    check.add_condition_gain_greater_than(min_allowed_gain=threshold)
+    return check
+
+
+def get_weak_segments_performance_check(threshold):
+    properties = [
+        {"name": "brightness", "method": brightness, "output_type": "numerical"},
+        {"name": " texture", "method": texture_level, "output_type": "numerical"},
+    ]
+    check = WeakSegmentsPerformance(
+        segment_minimum_size_ratio=threshold, image_properties=properties
+    )
+    return check
 
 
 if __name__ == "__main__":
@@ -76,9 +100,13 @@ if __name__ == "__main__":
         batch_loader=test_loader, task_type="classification", label_map=LABEL_MAP
     )
 
-    check = ClassPerformance()
-    check.add_condition_test_performance_greater_than(0.2)
-    suite = Suite("Custom Suite for testing classification model", check)
+    # Initialize the Test suite
+    suite = Suite(
+        "Custom Suite for testing classification model",
+        get_simple_model_comparison_check(strategy="stratified", threshold=0.99),
+        get_class_performance_check(0.2),
+        get_weak_segments_performance_check(0.33),
+    )
     result = suite.run(train_dataset=training_data, test_dataset=test_data)
     result.save_as_html("output.html")
 
