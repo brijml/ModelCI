@@ -1,7 +1,7 @@
 name: GitHub Actions Demo
 on:
   push:
-    branches: [ main, dev-wei ]
+    branches: [ main, dev-wl ]
   pull_request:
     branches: [ main ]
 
@@ -12,7 +12,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          ref: dev-wei
+          ref: dev-wl
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
@@ -25,7 +25,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          ref: dev-wei
+          ref: dev-wl
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
