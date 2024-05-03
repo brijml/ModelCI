@@ -155,8 +155,13 @@ if __name__ == "__main__":
         get_class_performance_check(0.2),
         get_weak_segments_performance_check(0.33),
     )
-    result = suite.run(train_dataset=color_training_data, test_dataset=color_test_data)
-    result.save_as_html("output.html")
+    result_id = suite.run(train_dataset=training_data, test_dataset=test_data)
+    result_ood = suite.run(train_dataset=color_training_data, test_dataset=color_test_data)
+    result_id.save_as_html("output_id.html")
+    result_id.save_as_html("output_ood.html")
 
-    if not result.passed():
+    if not result_id.passed():
+        sys.exit(1)
+
+    if not result_ood.passed():
         sys.exit(1)
