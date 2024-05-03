@@ -1,17 +1,42 @@
 import sys
 
+import h5py
 import numpy as np
+import PIL
 import torch
 from deepchecks.vision import Suite, VisionData
 from deepchecks.vision.checks.model_evaluation import *
 from deepchecks.vision.utils.image_properties import brightness, texture_level
 from deepchecks.vision.vision_data import BatchOutputFormat
 from torch import nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from torchvision import datasets
-from torchvision.transforms import ToTensor
+from torchvision.transforms import v2
 
 from train import NeuralNetwork
+
+
+class ColorFashionMNIST(Dataset):
+
+    def __init__(self, root, data_type, transforms) -> None:
+        self.images, self.labels = self._read_dataset(root, data_type)
+        self.transforms = transforms
+
+    def _read_dataset(self, root, data_type):
+        with h5py.File(f"{root}/color-fashion-mnist/dataset.hdf5") as f:
+            images = f[f"{data_type}/imgs"][:]
+            labels = f[f"{data_type}/labels"][:]
+        return images, labels
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, index):
+        image = PIL.Image.fromarray(self.images[index])
+        label = int(self.labels[index])
+        if self.transforms:
+            image = self.transforms(image)
+        return image, label
 
 
 def deepchecks_collate_fn(batch) -> BatchOutputFormat:
@@ -78,12 +103,15 @@ if __name__ == "__main__":
     model = torch.load("model.pt")
     device = "cpu"
 
+    transforms = v2.Compose(
+        [v2.Grayscale(num_output_channels=3), v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
+    )
     train_dataset = datasets.FashionMNIST(
-        root="data", train=True, download=True, transform=ToTensor()
+        root="data", train=True, download=True, transform=transforms
     )
 
     test_dataset = datasets.FashionMNIST(
-        root="data", train=False, download=True, transform=ToTensor()
+        root="data", train=False, download=True, transform=transforms
     )
 
     train_loader = DataLoader(
@@ -100,6 +128,26 @@ if __name__ == "__main__":
         batch_loader=test_loader, task_type="classification", label_map=LABEL_MAP
     )
 
+    # Read the color MNIST data
+    transforms = v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])
+    color_train_dataset = ColorFashionMNIST(root="data", data_type="train", transforms=transforms)
+
+    color_test_dataset = ColorFashionMNIST(root="data", data_type="test", transforms=transforms)
+
+    color_train_loader = DataLoader(
+        color_train_dataset, batch_size=4, shuffle=True, collate_fn=deepchecks_collate_fn
+    )
+    color_test_loader = DataLoader(
+        color_test_dataset, batch_size=4, shuffle=True, collate_fn=deepchecks_collate_fn
+    )
+
+    color_training_data = VisionData(
+        batch_loader=color_train_loader, task_type="classification", label_map=LABEL_MAP
+    )
+    color_test_data = VisionData(
+        batch_loader=color_test_loader, task_type="classification", label_map=LABEL_MAP
+    )
+
     # Initialize the Test suite
     suite = Suite(
         "Custom Suite for testing classification model",
@@ -107,7 +155,7 @@ if __name__ == "__main__":
         get_class_performance_check(0.2),
         get_weak_segments_performance_check(0.33),
     )
-    result = suite.run(train_dataset=training_data, test_dataset=test_data)
+    result = suite.run(train_dataset=color_training_data, test_dataset=color_test_data)
     result.save_as_html("output.html")
 
     if not result.passed():

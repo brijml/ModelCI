@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import datasets
-from torchvision.transforms import ToTensor
+from torchvision.transforms import v2
 
 
 class NeuralNetwork(nn.Module):
@@ -10,7 +10,7 @@ class NeuralNetwork(nn.Module):
         super().__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(28 * 28, 512),
+            nn.Linear(28 * 28 * 3, 512),
             nn.ReLU(),
             nn.Linear(512, 512),
             nn.ReLU(),
@@ -65,11 +65,14 @@ def test_loop(dataloader, model, loss_fn):
 
 
 if __name__ == "__main__":
+    transforms = v2.Compose(
+        [v2.Grayscale(num_output_channels=3), v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
+    )
     training_data = datasets.FashionMNIST(
-        root="data", train=True, download=True, transform=ToTensor()
+        root="data", train=True, download=True, transform=transforms
     )
 
-    test_data = datasets.FashionMNIST(root="data", train=False, download=True, transform=ToTensor())
+    test_data = datasets.FashionMNIST(root="data", train=False, download=True, transform=transforms)
 
     train_dataloader = DataLoader(training_data, batch_size=64)
     test_dataloader = DataLoader(test_data, batch_size=64)
