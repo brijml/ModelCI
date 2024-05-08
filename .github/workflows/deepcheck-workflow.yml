@@ -29,3 +29,37 @@ jobs:
         with:
           name: deepchecks results
           path: output.html
+  ad:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Install ART
+        run: |
+          python -m pip install adversarial-robustness-toolbox
+      - name: Test
+        run: |
+          python ad_test.py
+  sec:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Bandit
+        uses: tj-actions/bandit@v5.1  
