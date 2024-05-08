@@ -12,7 +12,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          ref: dev-brij
+          ref: main
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
