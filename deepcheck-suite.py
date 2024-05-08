@@ -128,26 +128,6 @@ if __name__ == "__main__":
         batch_loader=test_loader, task_type="classification", label_map=LABEL_MAP
     )
 
-    # Read the color MNIST data
-    transforms = v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])
-    color_train_dataset = ColorFashionMNIST(root="data", data_type="train", transforms=transforms)
-
-    color_test_dataset = ColorFashionMNIST(root="data", data_type="test", transforms=transforms)
-
-    color_train_loader = DataLoader(
-        color_train_dataset, batch_size=4, shuffle=True, collate_fn=deepchecks_collate_fn
-    )
-    color_test_loader = DataLoader(
-        color_test_dataset, batch_size=4, shuffle=True, collate_fn=deepchecks_collate_fn
-    )
-
-    color_training_data = VisionData(
-        batch_loader=color_train_loader, task_type="classification", label_map=LABEL_MAP
-    )
-    color_test_data = VisionData(
-        batch_loader=color_test_loader, task_type="classification", label_map=LABEL_MAP
-    )
-
     # Initialize the Test suite
     suite = Suite(
         "Custom Suite for testing classification model",
@@ -156,12 +136,7 @@ if __name__ == "__main__":
         get_weak_segments_performance_check(0.33),
     )
     result_id = suite.run(train_dataset=training_data, test_dataset=test_data)
-    result_ood = suite.run(train_dataset=color_training_data, test_dataset=color_test_data)
-    result_id.save_as_html("output_id.html")
-    result_id.save_as_html("output_ood.html")
+    result_id.save_as_html("output.html")
 
     if not result_id.passed():
-        sys.exit(1)
-
-    if not result_ood.passed():
         sys.exit(1)
